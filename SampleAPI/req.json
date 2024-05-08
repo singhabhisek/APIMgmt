@@ -1,0 +1,11 @@
+{
+  "user": {
+    "username": "johndoe",
+    "password": "password123"
+  },
+  "data": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "age": 30
+  }
+}

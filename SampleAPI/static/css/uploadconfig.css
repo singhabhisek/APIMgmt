@@ -1,0 +1,101 @@
+
+.dropdown {
+	position: relative;
+}
+
+.dropdown-menu {
+	margin-top: 0;
+	padding: 0;
+	< !-- top: 30px;
+	-->
+}
+
+.dropdown-content {
+	display: none;
+	position: absolute;
+	background-color: #f9f9f9;
+	min-width: 160px;
+	overflow-y: auto;
+	border: 1px solid #ccc;
+	max-height: 200px;
+	z-index: 1;
+}
+
+.dropdown-content.show {
+	display: block;
+}
+
+.dropdown-menu-right {
+	right: 0;
+	left: 0;
+}
+
+.dropdown-menu .dropdown-item:hover {
+	background-color: #007bff;
+	/* Change to your desired color */
+	color: #ffffff;
+	/* Change to your desired text color */
+}
+
+#operation_name_dropdown {
+	max-height: 100px;
+	/* Adjust the height as needed */
+	overflow-y: auto;
+}
+
+.scrollable-dropdown {
+	max-height: 100px;
+	/* Adjust the height as needed */
+	overflow-y: auto;
+}
+
+.panel-body {
+	padding-left: 5%;
+	padding-right: 5%;
+}
+
+.form-group {
+	margin-bottom: 20px;
+	/* Add some margin between form groups */
+}
+
+.dropdown-toggle {
+	width: 100%;
+	/* Make the dropdown toggle button full width */
+}
+
+.modal-lg {
+	max-width: 70%;
+	/* Set the maximum width to 70% */
+}
+
+.modal-dialog {
+	max-width: 70vw;
+	/* Set the maximum width to 70% of the viewport width */
+	margin: 1.75rem auto;
+	/* Center the modal horizontally */
+}
+
+.custom-modal-500 {
+	max-width: 500px;
+	margin: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	top: 30%;
+
+}
+
+table.dataTable tbody tr:hover {
+   background-color:#F8F8F8 !important;
+}
+
+/* Make labels bold */
+.modal-body label {
+    font-weight: bold;
+}
+
+/* Reduce font size for the specified span */
+.modal-body span {
+    font-size: 12px; /* Adjust the font size as needed */
+}

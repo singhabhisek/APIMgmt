@@ -1,0 +1,334 @@
+{
+    "entries": [
+        {
+            "serviceName": "UserVerification",
+            "operationName": "ValidateUser",
+            "useCase": "Description of Use Case for ValidateUser",
+            "successCriteria": "user",
+            "endpoint": "https://jsonplacseholder.typicode.com/posts/1",
+            "sampleRequestLocation": "",
+            "httpMethod": "GET",
+            "headers": {
+                "Header5": "aa",
+                "Header6": "",
+                "apiKey": "",
+                "customerId": ""
+            }
+        },
+        {
+            "serviceName": "UserVerification",
+            "operationName": "ValidateCompany",
+            "useCase": "Description of Use Case for ValidateCompany",
+            "successCriteria": "user",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/81",
+            "sampleRequestLocation": "",
+            "httpMethod": "GET",
+            "headers": {
+                "Header5": "aa",
+                "Header6": "",
+                "apiKey": "",
+                "customerId": ""
+            }
+        },
+        {
+            "serviceName": "ProductManagement",
+            "operationName": "AddProduct",
+            "useCase": "Description of Use Case for AddProduct",
+            "successCriteria": "product",
+            "endpoint": "https://jsonplaceholder.typicodes.com/posts/2",
+            "sampleRequestLocation": "C:\\abcd\\;\"\\}/--;''';##//as.json",
+            "httpMethod": "GET",
+            "headers": {
+                "Header3;xxx": "",
+                "Header4": "",
+                "clientId;": "",
+                "token": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder4",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/4",
+            "sampleRequestLocation": "d",
+            "httpMethod": "GET",
+            "headers": {
+                "Header5": "",
+                "Header6": "",
+                "apiKey": "",
+                "customerId": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder5",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/5",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder6",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/6",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder7",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/7",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder8",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/8",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder9",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/9",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder10",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/10",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder11",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/11",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder12",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/12",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder13",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/13",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder14",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/14",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder15",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/15",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder16",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/16",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder17",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/17",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder18",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/18",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder19",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/19",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder20",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/20",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder21",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/21",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        },
+        {
+            "serviceName": "OrderProcessing",
+            "operationName": "PlaceOrder22",
+            "useCase": "Description of Use Case for PlaceOrder",
+            "successCriteria": "order",
+            "endpoint": "https://jsonplaceholder.typicode.com/posts/22",
+            "sampleRequestLocation": "",
+            "httpMethod": "",
+            "headers": {
+                "customerId": "",
+                "apiKey": "",
+                "Header5": "",
+                "Header6": ""
+            }
+        }
+    ]
+}

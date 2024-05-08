@@ -1,0 +1,619 @@
+var selectedApp = '';
+var targetJson = '';
+
+
+
+// Function to show confirmation box
+function showConfirmation(message, type) {
+    // Retrieving elements from the confirmation box
+    var confirmBox = $('#confirm-box');
+    var confirmHeader = confirmBox.find('#confirm-header-text');
+    var header = $('.confirm-header'); // Select the header element
+    var confirmMessage = confirmBox.find('.confirm-message');
+    var okButton = confirmBox.find('#ok-button');
+
+    confirmMessage.text(message);
+    confirmBox.removeClass('hidden');
+
+    if (type === 'success') {
+        header.removeClass('bg-danger').addClass('bg-success');
+        confirmHeader.removeClass('bg-danger').addClass('bg-success');
+        confirmHeader.text('Success');
+    } else if (type === 'error') {
+        header.removeClass('bg-success').addClass('bg-danger');
+        confirmHeader.removeClass('bg-success').addClass('bg-danger');
+        confirmHeader.text('Error');
+    }
+
+    // Hide confirmation box when OK button is clicked
+    okButton.click(function() {
+        hideConfirmation();
+    });
+
+    // Event handler for hiding confirmation box when clicked outside the box
+    confirmBox.click(function() {
+        hideConfirmation();
+    });
+}
+
+// Function to hide confirmation box
+function hideConfirmation() {
+    var confirmBox = $('#confirm-box');
+    var okButton = confirmBox.find('#ok-button');
+
+    // Hiding the confirmation box
+    confirmBox.addClass('hidden');
+
+    // Remove click event from OK button
+    okButton.off('click');
+}
+
+// Document ready event handler
+$(document).ready(function() {
+    var table = $('#service-table').DataTable({
+        drawCallback: function(settings) {
+            // Hide the last two columns on each page draw
+            $(this.api().table().container())
+                .find('tbody tr')
+                .find('td:nth-last-child(-n+2)')
+                .hide();
+        },
+        autoWidth: false,
+        order: [], // Disable initial sorting
+        columnDefs: [
+            { targets: [0, 3, 4, 6], orderable: false } // Disable sorting for the first column (Select All checkbox)
+        ],
+        select: true
+    });
+
+    // Event handler for "Select All" checkbox
+    $('#select-all').change(function() {
+        var isChecked = $(this).prop('checked');
+        $('#service-table').DataTable().rows().every(function() {
+            var rowNode = this.node();
+            var checkbox = $(rowNode).find('input[name="service"]');
+            checkbox.prop('checked', isChecked);
+        });
+    });
+
+    // Event handler for individual checkboxes
+    $(document).on('change', 'input[name="service"]', function() {
+
+        // Update "Select All" checkbox state based on individual checkboxes
+        var currentPageCheckedCount = 0;
+        $('#service-table').DataTable().rows().every(function() {
+            var rowNode = this.node();
+            var checkbox = $(rowNode).find('input[name="service"]');
+            if (checkbox.prop('checked')) {
+                currentPageCheckedCount++;
+            }
+        });
+//        console.log('Total checked checkboxes in the table:', currentPageCheckedCount);
+
+        var totalCheckboxCount = $('#service-table').DataTable().rows().count();
+//        console.log('Total checkboxes in the table:', totalCheckboxCount);
+
+        var allChecked = currentPageCheckedCount === totalCheckboxCount;
+        $('#select-all').prop('checked', allChecked);
+    });
+
+    // Event handler for application select change
+    $('#app-dropdown').change(function() {
+        table.clear().draw();
+        $('#select-all').prop('checked', false);
+        selectedApp = $(this).find('option:selected').text();
+        $('#passed-count-value').text('');
+        $('#failed-at-least-once-count-value').text('');
+        $('#failed-all-count-value').text('');
+        // Load JSON data based on the selected application
+        $.getJSON('/static/config/app_config.json', function(data) {
+            targetJson = '';
+            data.applications.forEach(function(app) {
+                if (app.name === selectedApp) {
+                    targetJson = app.file;
+                    return false;
+                }
+            });
+            // Populate table with service data from JSON
+            $.getJSON(targetJson, function(serviceData) {
+                $.each(serviceData.entries, function(index, entry) {
+                    var overallStatus = entry.overall_status;
+                    var passedCount = entry.passed_count;
+                    var totalCount = entry.total_iterations;
+                    var iterationStatusText = passedCount + ' / ' + totalCount;
+                    table.row.add([
+                        '<input type="checkbox" name="service" value="' + entry.serviceName + ':' + entry.operationName + '">',
+                        entry.serviceName,
+                        entry.operationName,
+                        '',
+                        '',
+                        entry.useCase,
+                        '<button type="button" style="display:none" class="btn btn-primary show-results-btn">Results</button>',
+                        '',
+                        ''
+                    ]);
+                });
+                table.draw();
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('Error fetching JSON file:', textStatus, errorThrown);
+            });
+        });
+    });
+
+var counts = {
+            passed: 0,
+            failedAtLeastOnce: 0,
+            failedAll: 0
+        };
+
+    // Submit button Logic
+    $('#submit-btn').click(function() {
+        clearTableAndAccordion();
+
+        // Get selected services and execute them
+        var selectedServices = getSelectedServices();
+        if (selectedServices.length === 0) {
+              showConfirmation('Please select at least one service to execute.', 'error');
+              showErrorModal('error','Please select at least one service to execute.');
+            return;
+        }
+        disableSubmitButton();
+        counts = {
+            passed: 0,
+            failedAtLeastOnce: 0,
+            failedAll: 0
+        };
+        executeServices(selectedServices);
+    });
+
+
+    // Function to disable the submit button
+    function disableSubmitButton() {
+        $('#submit-button').prop('disabled', true); // Disable the submit button
+    }
+
+    // Function to enable the submit button
+    function enableSubmitButton() {
+        $('#submit-button').prop('disabled', false); // Enable the submit button
+    }
+
+
+    //reset button logic
+        $('#reset-btn').click(function() {
+            resetDataTables();
+            $('#iteration-count').val(1);
+            enableSubmitButton();
+        });
+
+    function resetDataTables(){
+        $('input[name="service"]').prop('checked', false); // Uncheck all checkboxes
+            // Reset select all checkbox
+            document.getElementById("select-all").checked = false;
+            $('.status-icon').attr('src', '').removeAttr('title'); // Clear status icons and tooltips
+            $('#service-table').DataTable().rows().every(function() {
+                var rowNode = this.node();
+                $(rowNode).find('td:nth-child(4)').empty(); // Clear Status column content
+                $(rowNode).find('td:nth-child(5)').empty(); // Clear Status Description column content
+                $(rowNode).find('td:nth-child(7)').empty(); // Clear Info column content
+                $(rowNode).find('td:nth-child(8)').empty(); // Clear Results column content
+                var checkbox = $(rowNode).find('input[type="checkbox"]');
+                checkbox.prop('checked', false);
+            });
+      }
+
+
+    // Function to disable the submit button
+    function disableSubmitButton() {
+        $('#submit-button').prop('disabled', true); // Disable the submit button
+    }
+
+    // Function to enable the submit button
+    function enableSubmitButton() {
+        $('#submit-button').prop('disabled', false); // Enable the submit button
+    }
+
+    // Clear table body and accordion contents
+    function clearTableAndAccordion() {
+        $('.accordion').empty();
+        $('.accordion').remove();
+        $('.modal').remove();
+//        $('.status-icon').attr('src', '').removeAttr('title');
+//        $('.status-icon').next('span').remove();
+//        $('td:nth-child(7)').empty();
+//        $('td:nth-child(8)').empty();
+//        $('td:nth-child(4)').empty();
+//        $('td:nth-child(5)').empty();
+        $('#passed-count-value, #failed-at-least-once-count-value, #failed-all-count-value').text('');
+
+        $('#service-table').DataTable().rows().every(function() {
+                var rowNode = this.node();
+                $(rowNode).find('td:nth-child(4)').empty(); // Clear Status column content
+                $(rowNode).find('td:nth-child(5)').empty(); // Clear Status Description column content
+                $(rowNode).find('td:nth-child(7)').empty(); // Clear Info column content
+                $(rowNode).find('td:nth-child(8)').empty(); // Clear Results column content
+
+            });
+
+    }
+
+    // Get selected services from the DataTable
+    function getSelectedServices() {
+        var selectedServices = [];
+        $('#service-table').DataTable().rows().every(function() {
+            var rowData = this.data();
+            var checkbox = $(this.node()).find('input[type="checkbox"]');
+            if (checkbox.prop('checked')) {
+                selectedServices.push(rowData[1] + ':' + rowData[2]);
+            }
+        });
+        return selectedServices;
+    }
+
+    // Execute selected services
+    async function executeServices(selectedServices) {
+        $('#loader-overlay').show();
+
+        var iterationCount = $('#iteration-count').val();
+        var requestData = {
+            services: selectedServices,
+            targetJson: targetJson,
+            iterationCount: iterationCount
+        };
+
+        // Split services into batches
+        var serviceBatches = [];
+
+        //Batch Count Declaration
+        var batchCount = 5;
+
+        while (requestData.services.length > 0) {
+            serviceBatches.push(requestData.services.splice(0, batchCount));
+        }
+
+        try {
+              // Execute each batch of services sequentially
+              for (let i = 0; i < serviceBatches.length; i++) {
+                    console.log('Executing Batch ' + (i + 1) + ' of ' + serviceBatches.length + ':', serviceBatches[i].join(', '));
+                    await Promise.all(serviceBatches[i].map(service => executeService(service, requestData)));
+
+                    // Check if this is the last batch
+                    if (i === serviceBatches.length - 1) {
+                        // Hide loader and show confirmation message after the last batch
+                        $('#loader-overlay').hide();
+                        showConfirmation('Execution Completed', 'success');
+                    }
+                }
+        } catch (error) {
+            // Handle execution error
+            handleExecutionError(null, null, error);
+
+        } finally {
+            $('#loader-overlay').hide();
+        }
+    }
+
+    // Function to execute a single service
+    function executeService(service, requestData) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '/execute',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ...requestData,
+                    services: [service]
+                }),
+                success: function(response) {
+                    handleExecutionSuccess(response);
+                    resolve();
+                },
+
+                error: function(xhr, status, error) {
+                    // Extract the error message from the response if available
+                    let errorMessage = '';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else {
+                        errorMessage = error || 'Unknown error occurred';
+                    }
+
+                    // Reject the promise with the error message
+//                    reject(errorMessage);
+                    // Extract serviceName and operationName from the error message
+                    serviceName = errorMessage.split(' => ')[0].split(' - ')[0]
+                    operationName = errorMessage.split(' => ')[0].split(' - ')[1]
+                    errorDetail = errorMessage.split(' => ')[1]
+
+                    // Pass serviceName, operationName, and errorDetail to displayErrorInDataTable
+                    displayErrorInDataTable(serviceName.trim(), operationName.trim(), errorDetail.trim());
+
+                    // Resolve the promise even if there's an error to continue with other operations
+                    resolve();
+                }
+            });
+        });
+    }
+
+    // Function to display the error message in the status description cell of the datatable
+    function displayErrorInDataTable(serviceName, operationName, errorMessage) {
+
+        var dataTable = $('#service-table').DataTable();
+
+        // Find the row in the datatable corresponding to the service name and operation name
+        var rowIndex = -1;
+        dataTable.rows().every(function (index) {
+            var rowData = this.data();
+    //        console.log(rowData[1] + rowData[2])
+            if (rowData && rowData[1] === serviceName && rowData[2] === operationName) {
+                rowIndex = index;
+                return false; // Exit the loop once the row is found
+            }
+            return true; // Continue iterating over rows
+        });
+
+        // Check if the row was found
+        if (rowIndex !== -1) {
+            // Update the status description cell with the error message
+
+            var statusDescriptionColumnIndex = 4; // Assuming the status description is in the fourth column
+            //make the font as red for error
+            dataTable.cell(rowIndex, statusDescriptionColumnIndex).data(`<span style="color: red">${errorMessage}</span>`).draw();
+
+        } else {
+            console.error('Row not found in the datatable:', serviceName, operationName);
+        }
+    }
+
+    // Handle successful execution response
+    function handleExecutionSuccess(response) {
+        var counts = calculateCounts(response.responses);
+        // Update table rows with response details
+        updateTableRows(response.responses);
+        // Update counts display
+        updateCountsDisplay(counts);
+        // Update "Show Results" buttons
+        updateShowResultsButtons(response);
+//        hideLoaderAndShowConfirmation(response);
+    }
+
+    // Calculate and return counts based on the response
+    function calculateCounts(serviceResponses) {
+
+
+        $.each(serviceResponses, function(serviceName, serviceData) {
+            console.log("Service:", serviceName, "Overall Status:", serviceData.overall_status);
+
+            if (serviceData.overall_status === 'GREEN') {
+                counts.passed++;
+            } else if (serviceData.overall_status === 'RED') {
+                counts.failedAll++;
+            } else if (serviceData.overall_status === 'AMBER') {
+                counts.failedAtLeastOnce++;
+            }
+        });
+        console.log("counts:", counts);
+        return counts;
+    }
+
+    // Update table rows with response details
+    function updateTableRows(serviceResponses) {
+        $.each(serviceResponses, function(serviceName, serviceData) {
+            var serviceNameParts = serviceName.split(':');
+
+            if (serviceNameParts.length !== 2) {
+                console.error('Invalid service name format:', serviceName);
+                return;
+            }
+
+            updateTableRow(serviceNameParts, serviceData);
+        });
+    }
+
+    // Update individual table row with service data
+    function updateTableRow(serviceNameParts, serviceData) {
+        $('#service-table').DataTable().rows().every(function() {
+            var rowData = this.data();
+
+            if (rowData[1] === serviceNameParts[0] && rowData[2] === serviceNameParts[1]) {
+                var rowNode = this.node();
+
+                updateStatusAndCounts(rowNode, serviceData);
+                updateRequestExecuted(rowNode, serviceData);
+                updateStatusDescription(rowNode, serviceData);
+                updateResultCell(rowNode, serviceData);
+                createModalContent(serviceNameParts[0], serviceNameParts[1], serviceData);
+            }
+        });
+    }
+
+    // Update status and counts
+    function updateStatusAndCounts(rowNode, serviceData) {
+        var overallStatusCell = $(rowNode).find('td:nth-child(4)');
+        var statusDescriptionCell = $(rowNode).find('td:nth-child(5)');
+
+        var statusColor = getStatusColor(serviceData.overall_status);
+        overallStatusCell.html('<img src="' + statusColor + '" alt="' + serviceData.overall_status + '">');
+        overallStatusCell.append($('<span>').text(' ' + serviceData.passed_count + ' of ' + serviceData.total_iterations));
+
+        statusDescriptionCell.empty();
+        $.each(serviceData.status_descriptions, function(index, description) {
+            statusDescriptionCell.append('<div>Iteration ' + (index + 1) + ': ' + description + '</div>');
+        });
+    }
+
+    // Get status color based on overall status
+    function getStatusColor(overallStatus) {
+        var statusColor = '';
+
+        if (overallStatus === "GREEN") {
+            statusColor = "/static/images/green.png";
+        } else if (overallStatus === "AMBER") {
+            statusColor = "/static/images/amber.png";
+        } else if (overallStatus === "RED") {
+            statusColor = "/static/images/red.png";
+        }
+
+        return statusColor;
+    }
+
+    // Update request executed
+    function updateRequestExecuted(rowNode, serviceData) {
+        var requestExecutedCell = $(rowNode).find('td:nth-child(9)');
+        var rawRequests = '';
+
+        serviceData.raw_requests.forEach(function(request) {
+            rawRequests += request.method + ' ' + request.url + ' | ';
+            rawRequests += 'Headers: ' + JSON.stringify(request.headers) + ' | ';
+
+            if (request.method === 'POST' && request.data) {
+                if (request.headers['Content-Type'] === 'application/xml') {
+                    rawRequests += 'Request Body (XML): ' + request.data + ' | ';
+                } else if (request.headers['Content-Type'] === 'application/json') {
+                    rawRequests += 'Request Body (JSON): ' + JSON.stringify(request.data) + ' | ';
+                }
+            }
+        });
+
+        rawRequests = rawRequests.slice(0, -3);
+
+        requestExecutedCell.html(rawRequests);
+        requestExecutedCell.hide();
+    }
+
+    // Update status description
+    function updateStatusDescription(rowNode, serviceData) {
+        var statusDescriptionCell = $(rowNode).find('td:nth-child(5)');
+
+        statusDescriptionCell.empty();
+        $.each(serviceData.status_descriptions, function(index, description) {
+            statusDescriptionCell.append('<div>Iteration ' + (index + 1) + ': ' + description + '</div>');
+        });
+    }
+
+
+    function roundToTwoDecimalPlaces(number) {
+            return typeof number === 'undefined' ? 0 : parseFloat(number.toFixed(2));
+        }
+
+    // Update result cell
+    function updateResultCell(rowNode, serviceData) {
+        var resultCell = $(rowNode).find('td:nth-child(8)');
+        var responseDetails = '';
+
+        $.each(serviceData.responses, function(index, iterationResponse) {
+//            alert(roundToTwoDecimalPlaces(iterationResponse.response_time));
+//            alert(iterationResponse.status);
+            var iterationNumber = index + 1;
+            var iterationStatus = iterationResponse.status === 'PASS' ? 'PASS' : 'FAIL';
+            var sanitizedResponse = iterationResponse.response.replace(/\n/g, ' ');
+            var sanitizedResponse = sanitizedResponse.replace(/\\n/g, ' ');
+
+            responseDetails += '<b>Iteration ' + iterationNumber + ' - ' + iterationStatus + '</b>: Time: ' + iterationResponse.response_time + sanitizedResponse + ' | ';
+        });
+
+        responseDetails = responseDetails.slice(0, -3);
+
+        resultCell.html(responseDetails);
+    }
+
+    // Update "Show Results" button and associated modal for each service
+    function updateShowResultsButtons(response) {
+        var table = $('#service-table').DataTable();
+
+        // Iterate through each row and update the Info column
+        table.rows().every(function() {
+            var rowData = this.data();
+            var serviceName = rowData[1];
+            var operationName = rowData[2];
+    //        console.log("ServiceName:", serviceName); // Log serviceName
+            var rowNode = this.node();
+            var infoCell = $(rowNode).find('td:nth-child(7)');
+
+            if (response.responses && response.responses.hasOwnProperty(serviceName + ':' + operationName)) {
+                var showResultsBtn = $('<button type="button" class="btn btn-info show-results-btn" data-toggle="modal" data-target="#modal-' + serviceName + '">Results</button>');
+                showResultsBtn.click(function() {
+                    var modalId = '#modal-' + serviceName + '-' + operationName;
+                    $(modalId).modal('show');
+                });
+                // Append the "Show Results" button to the existing content in the Info column
+                infoCell.append(showResultsBtn);
+                createModalContent(serviceName, operationName, response.responses[serviceName + ':' + operationName]);
+            }
+        });
+    }
+
+    // Create modal content for "Show Results" button
+    function createModalContent(actualServiceName, actualOperationName, serviceData) {
+        var accordionContainer = $('<div class="accordion" id="accordion-' + actualServiceName + '">');
+
+        // Iterate through each response and create accordion items
+        $.each(serviceData.responses, function(index, iterationResponse) {
+            var iterationNumber = index + 1;
+            var iterationStatus = iterationResponse.status === 'PASS' ? 'PASS' : 'FAIL';
+
+            // Create accordion item for each iteration
+            accordionContainer.append(
+                '<div class="card">' +
+                '<div class="card-header">' +
+                '<h2 class="mb-0">' +
+                '<button class="btn btn-link" type="button" data-toggle="collapse" ' +
+                'data-target="#collapse-' + actualServiceName + '-' + iterationNumber + '">' +
+                'Iteration ' + iterationNumber + ' - ' + iterationStatus +
+                '</button>' +
+                '</h2>' +
+                '</div>' +
+                '<div id="collapse-' + actualServiceName + '-' + iterationNumber + '" class="collapse" ' +
+                'aria-labelledby="heading-' + actualServiceName + '-' + iterationNumber + '" ' +
+                'data-parent="#accordion-' + actualServiceName + '">' +
+                '<div class="card-body">' +
+                'ResponseTime = ' + roundToTwoDecimalPlaces(iterationResponse.response_time)  + 'sec  - \n' +
+                iterationResponse.response +
+                '</div>' +
+                '</div>' +
+                '</div>'
+            );
+        });
+
+        // Create modal for the service
+        var modalContent = $('<div class="modal fade" id="modal-' + actualServiceName + '-' + actualOperationName + '">').append(
+            $('<div class="modal-dialog modal-dialog-scrollable modal-lg">').append(
+                $('<div class="modal-content">').append(
+                    $('<div class="modal-header">').append(
+                        $('<h5 class="modal-title">').text('Results for ' + actualServiceName + ':' + actualOperationName)
+                    ),
+                    $('<div class="modal-body">').append(accordionContainer),
+                    $('<div class="modal-footer">').append(
+                        $('<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>')
+                    )
+                )
+            )
+        );
+        // Append modal content to the body
+        $('body').append(modalContent);
+    }
+
+    // Hide loader and show confirmation message
+    function hideLoaderAndShowConfirmation(response) {
+        $('#loader-overlay').hide();
+        if (response.error) {
+            showConfirmation(response.error, 'error');
+        } else {
+            showConfirmation('Execution completed successfully.', 'success');
+        }
+    }
+
+    // Handle execution errors
+    function handleExecutionError(xhr, status, error) {
+        // Hide loader overlay
+        $('#loader-overlay').hide();
+        // Show error confirmation message
+        showConfirmation('Error executing services: ' + error, 'error');
+    }
+
+    // Function to update the counts display
+    function updateCountsDisplay(counts) {
+        $('#passed-count-value').text(counts.passed);
+        $('#failed-at-least-once-count-value').text(counts.failedAtLeastOnce);
+        $('#failed-all-count-value').text(counts.failedAll);
+    }
+});

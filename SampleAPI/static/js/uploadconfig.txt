@@ -1,0 +1,462 @@
+$(document).ready(function() {
+<!--dropdown handling	-->
+	// Load application names from app_config.json
+        $.getJSON('/static/config/app_config.json', function(data) {
+            var appDropdown = $('#app-dropdown');
+            appDropdown.empty(); // Clear existing options
+            $.each(data.applications, function(index, application) {
+                appDropdown.append($('<option></option>').text(application.name).val(application.file));
+            });
+            // Trigger change event to load service details for the first application
+            appDropdown.trigger('change');
+        });
+
+
+        // Event handler for application select change
+        $('#app-dropdown').change(function() {
+            // Clear service name and operation name dropdowns
+            $('#service_name_dropdown').empty();
+			// Clear DataTable
+        	table.column(0).search('').draw();
+
+            $('#service_name').val(null).trigger('change');
+            // Get the selected application name
+            var selectedApp = $(this).find('option:selected').text();
+            // Load respective config file based on selected application
+            $.getJSON('/static/config/app_config.json', function(data) {
+                targetJson = '';
+                // Find the object with the matching application name
+                data.applications.forEach(function(app) {
+                    if (app.name === selectedApp) {
+                        targetJson = app.file; // Set the target JSON file path
+                        return false; // Exit the loop once found
+                    }
+                });
+                // Load service details from the target JSON file
+                $.getJSON(targetJson, function(configData) {
+
+                    // Populate serviceName dropdown
+                    var serviceNames = new Set();
+                    $.each(configData.entries, function(index, entry) {
+<!--                    	console.log(entry.serviceName);-->
+                        serviceNames.add(entry.serviceName);
+                    });
+
+
+                    populateServiceDropdown(Array.from(serviceNames));
+                    $('#service_name_dropdown').toggleClass('scrollable-dropdown', $('#service_name_dropdown').children().length > 5);
+
+					// Load data table with respective config JSON
+					$.ajax({
+						type: 'POST',
+						contentType: 'application/json',
+						url: '/data',
+						data: JSON.stringify({ appConfig: targetJson }),
+						success: function(response) {
+							table.clear().rows.add(response).draw(); // Populate the DataTable with received data
+						},
+						error: function(xhr, status, error) {
+							console.error('Error loading data:', status, error);
+						}
+					});
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error('Error fetching JSON file:', textStatus, errorThrown);
+                });
+            });
+        });
+
+    // Function to populate service name dropdown
+    function populateServiceDropdown(serviceNames) {
+        var dropdownContent = $('#service_name_dropdown');
+        dropdownContent.empty();
+        serviceNames.forEach(function(serviceName) {
+            console.log(serviceName);
+            dropdownContent.append($('<div></div>').text(serviceName).addClass('dropdown-item'));
+        });
+    }
+
+    // Event handler for clicking on service name input
+    $('#service_name').click(function() {
+        $('#service_name_dropdown').toggleClass('show');
+    });
+
+
+	// Event handler for clicking on a service name option
+    $(document).on('click', '#service_name_dropdown .dropdown-item', function() {
+        var selectedService = $(this).text();
+        $('#service_name').val(selectedService);
+        $('#service_name_dropdown').removeClass('show');
+        // Filter the DataTable by selected service name
+    	table.column(0).search(selectedService).draw();
+
+    });
+
+
+<!--	DataTable code handling -->
+
+		var table = $('#dataTable').DataTable({
+<!--			"ajax": {-->
+<!--				"url": "/data",-->
+<!--				"dataSrc": ""-->
+<!--			},-->
+			"columns": [{
+					"data": "serviceName",
+					"width": "20%"
+				}, // Adjust the width as needed
+				{
+					"data": "operationName",
+					"width": "20%"
+				}, {
+					"data": "useCase",
+					"width": "20%"
+				}, {
+					"data": "successCriteria",
+					"width": "20%"
+				}, {
+					"data": "endpoint",
+					"width": "20%"
+				},
+				{
+					"data": "sampleRequestLocation",
+					"width": "20%"
+				},
+				{
+					"data": "httpMethod",
+					"width": "20%"
+				},
+				{
+					"data": "headers",
+					"width": "20%",
+					"render": function(data, type, row) {
+						return JSON.stringify(data);
+					}
+				}, {
+					"data": null,
+					"width": "10%",
+					"render": function(data, type, row) {
+						var index = table.row($(this).parents('tr')).index();
+						return '<div class="btn-group" role="group">' + '<button class="btn btn-primary editBtn" data-toggle="modal" data-target="#editModal" data-index="' + index + '">&#9998;</button>' + '<button class="btn btn-danger deleteBtn" data-index="' + index + '">&#128465;</button>' + '</div>';
+					}
+				}
+			]
+		});
+		// Add New Record Button Click Handler
+		$('#addRecordBtn').click(function() {
+            var serviceName = $('#service_name').val();
+            // Set serviceName and operationName fields as readonly
+            $('#editServiceName').prop('readonly', false);
+            $('#editOperationName').prop('readonly', false);
+
+            $('#editServiceName').val(serviceName);
+			$('#editHeaders').val('');
+
+			$('#editModalLabel').text('Add New Record');
+			$('#editModal .modal-body input').val('');
+			$('#editServiceName').val(serviceName);
+			$('#editModal').modal('show'); // This line ensures the modal is displayed
+			$('#saveEditBtn').off().on('click', function() {
+
+			var serviceName = $('#editServiceName').val();
+			var operationName = $('#editOperationName').val();
+			var successCriteria = $('#editSuccessCriteria').val();
+			var endpoint = $('#editEndpoint').val();
+			var sampleRequestLocation = $('#editSampleRequestLocation').val();
+			var httpmethod = $('#editHttpMethod').val();
+
+			if (!serviceName || !operationName || !successCriteria || !endpoint || !httpmethod) {
+				// Show error message or prevent form submission
+				showErrorModal('error', 'Please fill in all required fields.');
+				return; // Prevent form submission
+			}
+
+			// Check if httpMethod is PUT or POST and sampleRequestLocation is blank
+			if ((httpmethod === 'PUT' || httpmethod === 'POST') && sampleRequestLocation.trim() === '') {
+				// Display error message
+				showErrorModal('error', 'Sample Request Location is required for PUT and POST methods.');
+				return;
+			}
+
+			if(!isValidJson($('#editHeaders').val())) {
+				// Display error message
+				showErrorModal('error', 'Invalid JSON format for Headers. Please enter a valid JSON object.');
+
+				return;
+			}
+				showConfirmationModal('Are you sure you want to add this record?', 'Add', function() {
+					var newRow = {
+						"serviceName": $('#editServiceName').val(),
+						"operationName": $('#editOperationName').val(),
+						"useCase": $('#editUseCase').val(),
+						"successCriteria": $('#editSuccessCriteria').val(),
+						"endpoint": $('#editEndpoint').val(),
+						"sampleRequestLocation": $('#editSampleRequestLocation').val(),
+						"httpMethod": $('#editHttpMethod').val(),
+						"headers": JSON.parse($('#editHeaders').val()),
+						"appConfig": targetJson
+					};
+					$.ajax({
+						type: 'POST',
+						contentType: 'application/json',
+						url: '/add',
+						data: JSON.stringify(newRow),
+						success: function(response) {
+							$('#app-dropdown').trigger('change');
+							showErrorModal('success', JSON.stringify(response));
+						},
+						error: function(xhr, status, error) {
+							var errorMessage = xhr.responseJSON.message;
+							showErrorModal('error',errorMessage);
+//							$('#errorMessage').text(errorMessage);
+//							$('#errorModal').modal('show');
+						}
+					});
+				});
+			});
+		});
+
+
+        // Edit Button Click Handler
+		$('#dataTable tbody').on('click', 'button.editBtn', function() {
+			var index = $(this).data('index');
+			var rowId = table.row($(this).parents('tr')).index(); // Get the row index
+
+			var rowData = table.row($(this).parents('tr')).data();
+
+			// Populate the modal with existing data
+			$('#editModalLabel').text('Edit Record');
+			$('#editServiceName').val(rowData.serviceName);
+			$('#editOperationName').val(rowData.operationName);
+
+
+            // Set serviceName and operationName fields as readonly
+            $('#editServiceName').prop('readonly', true);
+            $('#editOperationName').prop('readonly', true);
+
+			$('#editUseCase').val(rowData.useCase);
+			$('#editSuccessCriteria').val(rowData.successCriteria);
+			$('#editEndpoint').val(rowData.endpoint);
+			$('#editSampleRequestLocation').val(rowData.sampleRequestLocation);
+			$('#editHttpMethod').val(rowData.httpMethod);
+			$('#editHeaders').val(JSON.stringify(rowData.headers)); // Ensure proper JSON formatting
+
+
+
+
+			// Define the save changes action
+			$('#saveEditBtn').off().on('click', function() {
+
+			if(!isValidJson($('#editHeaders').val())) {
+				// Display error message
+				showErrorModal('error', 'Invalid JSON format for Headers. Please enter a valid JSON object.');
+				return;
+			}
+
+			// Check if httpMethod is PUT or POST and sampleRequestLocation is blank
+			if (($('#editHttpMethod').val() === 'PUT' || $('#editHttpMethod').val() === 'POST') && $('#editSampleRequestLocation').val().trim() === '') {
+				// Display error message
+				showErrorModal('error', 'Sample Request Location is required for PUT and POST methods.');
+				return;
+			}
+				showConfirmationModal('Are you sure you want to edit this record?', 'Edit', function() {
+					var editedData = {
+						"serviceName": $('#editServiceName').val(),
+						"operationName": $('#editOperationName').val(),
+						"useCase": $('#editUseCase').val(),
+						"successCriteria": $('#editSuccessCriteria').val(),
+						"endpoint": $('#editEndpoint').val(),
+						"sampleRequestLocation": $('#editSampleRequestLocation').val(),
+						"httpMethod": $('#editHttpMethod').val(),
+						"headers": JSON.parse($('#editHeaders').val()),
+						"appConfig": targetJson
+					};
+
+					$.ajax({
+						type: 'PUT',
+						contentType: 'application/json', // Set content type header
+						url: '/edit/' + rowId,
+						data: JSON.stringify(editedData), // Ensure proper JSON formatting
+						success: function(response) {
+							<!--							table.ajax.reload();-->
+							$('#app-dropdown').trigger('change');
+							console.log(response);
+							showErrorModal('success', JSON.stringify(response));
+						}
+					});
+				});
+			});
+		});
+
+
+
+		// Delete Button Click Handler
+		$('#dataTable tbody').on('click', 'button.deleteBtn', function() {
+			var deleteBtn = $(this); // Store reference to the delete button
+			var index = deleteBtn.data('index');
+			var rowId = table.row($(this).parents('tr')).index();
+			// Get the data for the row to be deleted
+			var rowData = table.row($(this).parents('tr')).data();
+			var deleteMessage = 'Are you sure you want to delete the record for ' + rowData.serviceName + '?';
+			// Set the confirmation modal text
+			$('#deleteConfirmationText').text(deleteMessage);
+			// Show the confirmation modal
+			$('#deleteConfirmationModal').modal('show');
+			// Handle the delete action
+			$('#deleteConfirmationActionBtn').off('click').on('click', function() {
+				// Execute the delete action
+				$.ajax({
+					type: 'DELETE',
+					url: '/delete/' + rowId,
+					contentType: 'application/json', // Set content type header
+					data: JSON.stringify({ appConfig: targetJson }), // Pass targetJson in request body
+					success: function(response) {
+						// Reload the datatable after successful delete
+						<!--							table.ajax.reload();-->
+							$('#app-dropdown').trigger('change');
+					},
+					error: function(xhr, status, error) {
+						var errorMessage = xhr.responseJSON.message;
+						$('#errorMessage').text(errorMessage);
+						$('#errorModal').modal('show');
+					}
+				});
+				// Hide the confirmation modal
+				$('#deleteConfirmationModal').modal('hide');
+			});
+		});
+
+
+		// Add Application Modal - Save Button Click Handler
+	$('#saveApplicationBtn').click(function() {
+		var applicationName = $('#applicationName').val();
+
+		// Make sure the application name is not empty
+		if (!applicationName) {
+			// Show an error message or prevent form submission
+			return;
+		}
+
+		// Send an AJAX request to the backend to add the application
+		$.ajax({
+			type: 'POST',
+			url: '/add_application',
+			data: { applicationName: applicationName },
+			success: function(response) {
+				// Handle success response
+				showErrorModal('success','Application added successfully');
+				$('#addApplicationModal').modal('hide'); // Close the modal
+				reloadApplicationDropdown(); // Reload the application dropdown
+			},
+			error: function(xhr, status, error) {
+				// Handle error response
+				var errorMessage = xhr.responseJSON.error;
+				showErrorModal('error', errorMessage);
+			}
+		});
+	});
+
+	// Function to reload the application dropdown
+    function reloadApplicationDropdown() {
+        $.ajax({
+            type: 'GET',
+            url: '/get_applications',
+            success: function(response) {
+                // Update the application dropdown options
+                var dropdown = $('#app-dropdown');
+                dropdown.empty();
+                response.applications.forEach(function(application) {
+                    dropdown.append($('<option></option>').attr('value', application.name).text(application.name));
+                });
+            },
+            error: function(xhr, status, error) {
+                // Handle error response
+                showErrorModal('error', error);
+            }
+        });
+    }
+
+
+//		multiple shortcuts code
+        $('#editModal').on('shown.bs.modal', function () {
+            $('#editServiceName').focus();
+        });
+		// Keyboard shortcut for saving the modal form (Ctrl + S)
+		$(document).keydown(function(e) {
+			if (((e.ctrlKey || e.metaKey) && e.keyCode == 83) && $('#editModal').is(':visible')) {
+				e.preventDefault();
+				$('#saveEditBtn').click();
+			}
+		});
+
+		// Error Modal Enter Key Press Listener
+		$('#errorModal').on('keypress', function(e) {
+			if (e.which === 13) {
+				$('#errorModalSubmitBtn').click();
+			}
+		});
+
+		// Confirmation Modal Enter Key Press Listener
+		$('#confirmationModal').on('keypress', function(e) {
+			if (e.which === 13) {
+				$('#confirmationModalSubmitBtn').click();
+			}
+		});
+
+		// Delete Confirmation Modal Enter Key Press Listener
+		$('#deleteConfirmationModal').on('keypress', function(e) {
+			if (e.which === 13) {
+				$('#deleteConfirmationModalSubmitBtn').click();
+			}
+		});
+
+		// Keyboard shortcut for closing the modal (Escape key)
+		$(document).keydown(function(e) {
+			if (e.keyCode == 27) {
+				$('#editModal').modal('hide');
+			}
+		});
+
+	});
+	// Function to check if a string is valid JSON
+	function isValidJson(jsonString) {
+		try {
+			JSON.parse(jsonString);
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+	// Function to display error message in modal
+	function showErrorModal(indicator, message) {
+		var modalHeader = $('#errorModalHeader');
+		var errorMessage = $('#errorMessage');
+		var errorModalLabel = $('#errorModalLabel');
+		// Set header color based on indicator
+		if(indicator === 'success') {
+			modalHeader.removeClass('bg-danger').addClass('bg-success');
+			errorModalLabel.text("Success");
+		} else {
+			modalHeader.removeClass('bg-success').addClass('bg-danger');
+			errorModalLabel.text("Error");
+		}
+		// Set error message
+		errorMessage.text(message);
+<!--		// Remove the data-dismiss attribute from the close button-->
+<!--    $('#errorModal [data-dismiss="modal"]').removeAttr('data-dismiss');-->
+		// Show the modal
+		$('#errorModal').modal('show');
+
+
+	}
+	// Function to show confirmation modal with custom text and action
+	function showConfirmationModal(text, action, callback) {
+		$('#errorModal').modal('hide'); // Hide the error modal (if open)
+		$('#confirmationText').text(text);
+		$('#confirmationActionBtn').text(action);
+		$('#confirmationModal').modal('show');
+		// Bind the action callback to the confirmation action button click event
+		$('#confirmationActionBtn').off('click.confirmation').on('click.confirmation', function() {
+			callback(); // Execute the action
+			$('#confirmationModal').modal('hide'); // Hide the modal after action is executed
+			$('#editModal').modal('hide'); // Hide the modal after action is executed
+		});
+	}

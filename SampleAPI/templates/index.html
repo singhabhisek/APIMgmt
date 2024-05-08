@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<head>
+    <title>Service Checker</title>
+    <!-- Include necessary CSS and JavaScript libraries -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
+    <!-- Add any additional styling or scripts -->
+
+    <script src="static/js/common.js"></script>
+    <script src="static/js/uploadconfig.js"></script>
+    <script src="static/js/error.js"></script>
+<link rel="stylesheet" type="text/css"
+          href="static/css/common.css">
+
+</head>
+<body>
+<div id="banner">
+    <!-- Logo, application name, and welcome user label -->
+    <table style="width: 100%;">
+        <tr>
+            <td class="app-logo">
+                <!-- Logo goes here -->
+                <img src="static/images/truist.png" style="width: 200px;" alt="Logo">
+            </td>
+            <td class="app-name">
+                <!-- Application name goes here -->
+                <h1 style="font-size: 36px;">AppHealthWatch - <span style="font-size: 24px;">API Health Check Utility</span></h1>
+            </td>
+            <td class="welcome-user">
+                <!-- Welcome message with username goes here -->
+                Welcome User
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="sidebar">
+
+    <div class="sidebar-menu">
+        <!-- Sidebar menu items go here -->
+        <div class="sidebar-item">
+            <a href="/" class="sidebar-link">
+                <span class="sidebar-icon home-icon"></span> Home
+            </a>
+        </div>
+
+        <div class="sidebar-item">
+            <a href="/upload_configuration" class="sidebar-link">
+                <span class="sidebar-icon upload-icon"></span> Edit Configuration
+            </a>
+        </div>
+
+        <div class="sidebar-item">
+            <a href="/upload" class="sidebar-link">
+                <span class="sidebar-icon upload-icon"></span> Upload
+            </a>
+        </div>
+
+    </div>
+
+    <br>
+    <hr>
+    <br>
+
+    <label for="application-select">Select Application:</label>
+    <select id="app-dropdown" class="form-control">
+        <option value="">Select Application</option>
+        {% for app in app_config.applications %}
+        <option value="{{ url_for('static', filename=app.file) }}">{{ app.name }}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <label for="iteration-count">Iteration Count:</label>
+    <input type="number" style="width:100%;height:35px;" id="iteration-count" name="iteration-count" value="1" max="3">
+    <br>
+    <br/>
+    <div class="btn-group" role="group" style="width:100%">
+        <input type="button" id="submit-btn" value="Submit" class="btn btn-primary">
+        <input type="button" id="reset-btn" value="Reset" class="btn btn-secondary" style="margin-left: 10px;">
+    </div>
+
+    <br>
+    <br>
+    <br/>
+    <div class="panel">
+        <p>Overall Report - </p>
+
+        <div id="passed-count"><strong>Passed all:</strong> <span id="passed-count-value"></span></div>
+        <div id="failed-at-least-once-count"><strong>Failed at least one:</strong> <span
+                id="failed-at-least-once-count-value"></span></div>
+        <div id="failed-all-count"><strong>Failed all:</strong> <span id="failed-all-count-value"></span></div>
+    </div>
+</div>
+<div id="main">
+<!--    <input type="button" id="export-btn" style="position: relative; float: right; margin-top: 10px; margin-right: 10px;"-->
+<!--           value="Export to CSV" class="btn btn-secondary">-->
+
+<!--    <br>-->
+
+    <div class="btn-group" role="group" style="margin-bottom: 10px;">
+        <input type="button" id="export-btn" value="Export to CSV" class="btn btn-secondary">
+
+        <!-- Checkboxes for including request and response -->
+        <div class="form-check form-check-inline" style="margin-left: 10px;">
+            <input class="form-check-input" type="checkbox" id="include-request" checked>
+            <label class="form-check-label" for="include-request">Include Request</label>
+        </div>
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="include-response" checked>
+            <label class="form-check-label" for="include-response">Include Response</label>
+        </div>
+    </div>
+
+    <div id="loader-overlay">
+        <div class="loader"></div>
+    </div>
+    <table class="table table-striped table-bordered" id="service-table">
+        <thead>
+        <tr>
+            <th>
+                <input type="checkbox" id="select-all">
+            </th>
+            <!-- Select All checkbox -->
+            <th>Service Name</th>
+            <th>Operation Name</th>
+            <th>Status</th>
+            <th>Status Description</th>
+            <!-- New column for Status Description -->
+            <th>Description</th>
+            <th>Info</th>
+            <th style="display:none">Result</th>
+            <th style="display: none;">Request Executed</th>
+            <!-- New column for result response -->
+        </tr>
+        </thead>
+        <tbody>
+        {% for service in services %}
+        <tr>
+            <td>
+                <input type="checkbox" name="service" value="{{ service }}">
+            </td>
+            <td>{{ service }}</td>
+            <td>{{ operationName }}</td>
+            <td><img src="" style="width:15px; height:15px;" alt="Status" class="status-icon"></td>
+            <td></td>
+            <td>Description of service</td>
+            <td></td>
+            <td style="display:none"></td>
+            <td style="display:none"></td>
+            <!-- New column for result response -->
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <br>
+</div>
+
+<div class="container mt-5">
+    <div id="confirm-box" class="hidden">
+        <div class="card">
+            <div class="confirm-header">
+                <h5 class="card-title" id="confirm-header-text"></h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text confirm-message"></p>
+            </div>
+            <div class="card-footer center-button">
+                <button id="ok-button" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+
+
+<!--   script for excel download for selective columns on click of export button-->
+<script>
+    document.getElementById('export-btn').addEventListener('click', function() {
+        // Define the columns to export
+        var selectedColumns = [1, 2]; // Example: Exporting the specified columns
+
+        // Get the DataTable instance
+        var originalTable = $('#service-table').DataTable();
+
+        // Initialize arrays to hold headers and rows
+        var rows = [];
+        var headers = [];
+
+        // Populate headers array with column names
+        $('#service-table thead th').each(function(index) {
+            if (selectedColumns.includes(index)) {
+                headers.push($(this).text());
+            }
+        });
+
+        // Add additional headers for status and response
+        headers.push('Overall Status', 'Status Description');
+
+        // Checkboxes to include request and response
+        var includeRequest = $('#include-request').prop('checked');
+        var includeResponse = $('#include-response').prop('checked');
+
+        if (includeRequest) headers.push('Request');
+        if (includeResponse) headers.push('Response');
+
+        // Add the header row to the rows array
+        rows.push(headers);
+
+        // Iterate over each service in the DataTable
+        var services = {};
+        originalTable.rows().every(function() {
+            var rowData = this.data();
+            var rowNode = this.node();
+            var serviceName = rowData[1]; // Assuming service name is in the second column
+
+            // Check if the row checkbox is checked
+            var checkbox = $(rowNode).find('input[type="checkbox"]');
+            if (checkbox.prop('checked')) {
+                if (!services[serviceName]) {
+                    services[serviceName] = {
+                        data: [],
+                        status: '',
+                        statusDescription: '',
+                        request: '',
+                        response: ''
+                    };
+                }
+
+                services[serviceName].data = rowData;
+                services[serviceName].status = $(rowNode).find('td:nth-child(4)').text();
+                services[serviceName].statusDescription = $(rowNode).find('td:nth-child(5)').text();
+                services[serviceName].request = $(rowNode).find('td:nth-child(9)').html();
+                services[serviceName].response = $(rowNode).find('td:nth-child(8)').text();
+            }
+        });
+
+        // Populate the rows array with combined service data
+        for (var serviceName in services) {
+            var serviceData = services[serviceName].data;
+            var newRow = [];
+
+            for (var i = 0; i < selectedColumns.length; i++) {
+                newRow.push(serviceData[selectedColumns[i]]);
+            }
+
+            newRow.push(
+                services[serviceName].status,
+                services[serviceName].statusDescription
+            );
+
+            if (includeRequest) {
+                newRow.push(services[serviceName].request);
+            }
+
+            if (includeResponse) {
+                newRow.push(services[serviceName].response);
+            }
+
+            rows.push(newRow);
+        }
+
+
+
+        // Create a new table element
+        var newTable = document.createElement('table');
+        newTable.style.borderCollapse = 'collapse'; // Collapse borders
+        newTable.style.border = '1px solid #000'; // Add border to table
+
+        // Populate the new table with rows and cells
+        for (var i = 0; i < rows.length; i++) {
+            var newRow = document.createElement('tr');
+
+            for (var j = 0; j < rows[i].length; j++) {
+                var originalCell = document.createElement('td');
+                originalCell.innerText = rows[i][j];
+                originalCell.style.verticalAlign = 'middle';
+                originalCell.style.textAlign = 'center';
+                originalCell.style.border = '1px solid #000'; // Add border to cells
+                originalCell.setAttribute('mso-number-format', '\@'); // Set column format as text
+                newRow.appendChild(originalCell);
+            }
+
+            newTable.appendChild(newRow);
+        }
+
+        // Convert the new table to HTML string
+        var tableHtml = newTable.outerHTML;
+        var blob = new Blob([tableHtml], {
+            type: 'application/vnd.ms-excel'
+        });
+
+        // Create a download link and trigger the download
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'service-data.xls';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+</script>
+
+
+
+</html>
