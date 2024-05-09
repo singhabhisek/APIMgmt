@@ -36,7 +36,7 @@
             "useCase": "Description of Use Case for AddProduct",
             "successCriteria": "product",
             "endpoint": "https://jsonplaceholder.typicodes.com/posts/2",
-            "sampleRequestLocation": "C:\\abcd\\;\"\\}/--;''';##//as.json",
+            "sampleRequestLocation": "C:\\Users\\AS\\Desktop\\abcdef\\note.xml",
             "httpMethod": "GET",
             "headers": {
                 "Header3;xxx": "",
@@ -49,9 +49,9 @@
             "serviceName": "OrderProcessing",
             "operationName": "PlaceOrder4",
             "useCase": "Description of Use Case for PlaceOrder",
-            "successCriteria": "order",
+            "successCriteria": "orders",
             "endpoint": "https://jsonplaceholder.typicode.com/posts/4",
-            "sampleRequestLocation": "d",
+            "sampleRequestLocation": "OrderProcessing_PlaceOrder4_Request.txt",
             "httpMethod": "GET",
             "headers": {
                 "Header5": "",
@@ -66,13 +66,13 @@
             "useCase": "Description of Use Case for PlaceOrder",
             "successCriteria": "order",
             "endpoint": "https://jsonplaceholder.typicode.com/posts/5",
-            "sampleRequestLocation": "",
-            "httpMethod": "",
+            "sampleRequestLocation": "OrderProcessing_PlaceOrder5_Request.txt",
+            "httpMethod": null,
             "headers": {
-                "customerId": "",
-                "apiKey": "",
                 "Header5": "",
-                "Header6": ""
+                "Header6": "",
+                "apiKey": "",
+                "customerId": ""
             }
         },
         {
@@ -81,13 +81,13 @@
             "useCase": "Description of Use Case for PlaceOrder",
             "successCriteria": "order",
             "endpoint": "https://jsonplaceholder.typicode.com/posts/6",
-            "sampleRequestLocation": "",
-            "httpMethod": "",
+            "sampleRequestLocation": "static/requests/OrderProcessing_PlaceOrder6_Request.txt",
+            "httpMethod": null,
             "headers": {
-                "customerId": "",
-                "apiKey": "",
                 "Header5": "",
-                "Header6": ""
+                "Header6": "",
+                "apiKey": "",
+                "customerId": ""
             }
         },
         {
@@ -96,28 +96,13 @@
             "useCase": "Description of Use Case for PlaceOrder",
             "successCriteria": "order",
             "endpoint": "https://jsonplaceholder.typicode.com/posts/7",
-            "sampleRequestLocation": "",
-            "httpMethod": "",
+            "sampleRequestLocation": "OrderProcessing_PlaceOrder7_Request.txt",
+            "httpMethod": "POST",
             "headers": {
-                "customerId": "",
-                "apiKey": "",
                 "Header5": "",
-                "Header6": ""
-            }
-        },
-        {
-            "serviceName": "OrderProcessing",
-            "operationName": "PlaceOrder8",
-            "useCase": "Description of Use Case for PlaceOrder",
-            "successCriteria": "order",
-            "endpoint": "https://jsonplaceholder.typicode.com/posts/8",
-            "sampleRequestLocation": "",
-            "httpMethod": "",
-            "headers": {
-                "customerId": "",
+                "Header6": "",
                 "apiKey": "",
-                "Header5": "",
-                "Header6": ""
+                "customerId": ""
             }
         },
         {
@@ -329,6 +314,16 @@
                 "Header5": "",
                 "Header6": ""
             }
+        },
+        {
+            "serviceName": "UserVerification",
+            "operationName": "aad",
+            "useCase": "qwe",
+            "successCriteria": "we",
+            "endpoint": "ad",
+            "sampleRequestLocation": "qew",
+            "httpMethod": "GET",
+            "headers": {}
         }
     ]
 }

@@ -490,6 +490,22 @@ var counts = {
         });
     }
 
+    // Event handler for iteration count input
+    $('#iteration-count').on('input', function() {
+        var maxIterations = 3;
+        var inputValue = parseInt($(this).val());
+
+        if (inputValue > maxIterations) {
+            $(this).val(maxIterations);
+        }
+
+        var minIterations = 1;
+        var inputValue = parseInt($(this).val());
+
+        if (isNaN(inputValue) || inputValue < minIterations) {
+            $(this).val(minIterations);
+        }
+    });
 
     function roundToTwoDecimalPlaces(number) {
             return typeof number === 'undefined' ? 0 : parseFloat(number.toFixed(2));

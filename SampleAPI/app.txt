@@ -210,8 +210,8 @@ def execute():
                                         with open(entry['sampleRequestLocation'], 'r') as f:
                                             sample_request_content = f.read()
                                     except FileNotFoundError:
-                                        raise ValueError(f"ERROR: Please check the XML/JSON payload file. File not found: {entry['sampleRequestLocation']}")
-
+                                        error_message = f"{service_name} - {operation_name} => File not found: {entry['sampleRequestLocation']}"
+                                        return jsonify({'status': 'error', 'message': error_message}), 500
                                     try:
                                         xml_root = ET.fromstring(sample_request_content)
                                         # Convert XML object to string for display
@@ -275,8 +275,12 @@ def execute():
                                 else:
                                     if entry['sampleRequestLocation'] != '':
                                         # Read sample request content
-                                        with open(entry['sampleRequestLocation'], 'r') as f:
-                                            sample_request_content = f.read()
+                                        try:
+                                            with open(entry['sampleRequestLocation'], 'r') as f:
+                                                sample_request_content = f.read()
+                                        except FileNotFoundError:
+                                            error_message = f"{service_name} - {operation_name} => File not found: {entry['sampleRequestLocation']}"
+                                            return jsonify({'status': 'error', 'message': error_message}), 500
 
                                         # Determine request content type based on sample request location file content
                                         content_type = 'application/json'
@@ -773,10 +777,28 @@ def add_record():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# Route to save request text to file
+@app.route('/save_request_text', methods=['POST'])
+def save_request_text():
+    try:
+        data = request.json
+        fileName = data.get('fileName')
+        sampleRequestText = data.get('sampleRequestText')
+        filePath = os.path.join('static', 'requests', fileName)
+
+        with open(filePath, 'w') as file:
+            file.write(sampleRequestText)
+        return jsonify({"success": True, "message": "Request text saved successfully!"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/edit/<int:index>', methods=['PUT'])
 def edit_record(index):
     try:
         edited_record = request.json
+
         app_config = edited_record.get('appConfig')
         data = load_data(app_config)
         data[index] = edited_record

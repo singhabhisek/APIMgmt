@@ -169,12 +169,24 @@ $(document).ready(function() {
 				return; // Prevent form submission
 			}
 
-			// Check if httpMethod is PUT or POST and sampleRequestLocation is blank
-			if ((httpmethod === 'PUT' || httpmethod === 'POST') && sampleRequestLocation.trim() === '') {
-				// Display error message
-				showErrorModal('error', 'Sample Request Location is required for PUT and POST methods.');
-				return;
-			}
+			var sampleRequestText = $('#editSampleRequestText').val().trim();
+            var sampleRequestLocation = $('#editSampleRequestLocation').val().trim();
+
+            var httpMethod = $('#editHttpMethod').val();
+
+            // Check if httpMethod is selected
+            if (!httpMethod || httpMethod.trim() === '') {
+                // Display error message
+                showErrorModal('error', 'HTTP Method is required.');
+                return;
+            }
+
+            // Check if httpMethod is PUT or POST and sampleRequestLocation or sampleRequestText is blank
+            if (($('#editHttpMethod').val() === 'PUT' || $('#editHttpMethod').val() === 'POST') && (sampleRequestLocation === '' && sampleRequestText === '')) {
+                // Display error message
+                showErrorModal('error', 'Sample Request Location or Sample Request Text is required for PUT and POST methods.');
+                return;
+            }
 
 			if(!isValidJson($('#editHeaders').val())) {
 				// Display error message
@@ -194,25 +206,54 @@ $(document).ready(function() {
 						"headers": JSON.parse($('#editHeaders').val()),
 						"appConfig": targetJson
 					};
-					$.ajax({
-						type: 'POST',
-						contentType: 'application/json',
-						url: '/add',
-						data: JSON.stringify(newRow),
-						success: function(response) {
-							$('#app-dropdown').trigger('change');
-							showErrorModal('success', JSON.stringify(response));
-						},
-						error: function(xhr, status, error) {
-							var errorMessage = xhr.responseJSON.message;
-							showErrorModal('error',errorMessage);
-//							$('#errorMessage').text(errorMessage);
-//							$('#errorModal').modal('show');
-						}
-					});
+
+					// Update sampleRequestText and save to file
+                    var sampleRequestText = $('#editSampleRequestText').val();
+                    var fileName = $('#editServiceName').val() + '_' + $('#editOperationName').val() + '_Request.txt';
+
+
+                    if (sampleRequestText !== '') {
+                        // Update sampleRequestText and save to file
+                        var fileName = $('#editServiceName').val() + '_' + $('#editOperationName').val() + '_Request.txt';
+                        $.ajax({
+                            type: 'POST',
+                            contentType: 'application/json',
+                            url: '/save_request_text',
+                            data: JSON.stringify({ fileName: fileName, sampleRequestText: sampleRequestText }),
+                            success: function(response) {
+                                // Update sampleRequestLocation and save edited data
+                                newRow.sampleRequestLocation = "static/requests/" + fileName;
+                                saveAddRow(newRow);
+                            }
+                        });
+                    } else {
+                        // No need to update sampleRequestText, directly save edited data
+                        saveAddRow(newRow);
+                    }
+
+
 				});
 			});
 		});
+
+		function saveAddRow(newRow){
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                url: '/add',
+                data: JSON.stringify(newRow),
+                success: function(response) {
+                    $('#app-dropdown').trigger('change');
+                    showErrorModal('success', JSON.stringify(response));
+                },
+                error: function(xhr, status, error) {
+                    var errorMessage = xhr.responseJSON.message;
+                    showErrorModal('error',errorMessage);
+    //							$('#errorMessage').text(errorMessage);
+    //							$('#errorModal').modal('show');
+                }
+            });
+        }
 
 
         // Edit Button Click Handler
@@ -245,48 +286,92 @@ $(document).ready(function() {
 			// Define the save changes action
 			$('#saveEditBtn').off().on('click', function() {
 
-			if(!isValidJson($('#editHeaders').val())) {
-				// Display error message
-				showErrorModal('error', 'Invalid JSON format for Headers. Please enter a valid JSON object.');
-				return;
-			}
+                if(!isValidJson($('#editHeaders').val())) {
+                    // Display error message
+                    showErrorModal('error', 'Invalid JSON format for Headers. Please enter a valid JSON object.');
+                    return;
+                }
 
-			// Check if httpMethod is PUT or POST and sampleRequestLocation is blank
-			if (($('#editHttpMethod').val() === 'PUT' || $('#editHttpMethod').val() === 'POST') && $('#editSampleRequestLocation').val().trim() === '') {
-				// Display error message
-				showErrorModal('error', 'Sample Request Location is required for PUT and POST methods.');
-				return;
-			}
-				showConfirmationModal('Are you sure you want to edit this record?', 'Edit', function() {
-					var editedData = {
-						"serviceName": $('#editServiceName').val(),
-						"operationName": $('#editOperationName').val(),
-						"useCase": $('#editUseCase').val(),
-						"successCriteria": $('#editSuccessCriteria').val(),
-						"endpoint": $('#editEndpoint').val(),
-						"sampleRequestLocation": $('#editSampleRequestLocation').val(),
-						"httpMethod": $('#editHttpMethod').val(),
-						"headers": JSON.parse($('#editHeaders').val()),
-						"appConfig": targetJson
-					};
+                // Check if httpMethod is PUT or POST and sampleRequestLocation is blank
+//                if (($('#editHttpMethod').val() === 'PUT' || $('#editHttpMethod').val() === 'POST') && $('#editSampleRequestLocation').val().trim() === '') {
+//                    // Display error message
+//                    showErrorModal('error', 'Sample Request Location is required for PUT and POST methods.');
+//                    return;
+//                }
 
-					$.ajax({
-						type: 'PUT',
-						contentType: 'application/json', // Set content type header
-						url: '/edit/' + rowId,
-						data: JSON.stringify(editedData), // Ensure proper JSON formatting
-						success: function(response) {
-							<!--							table.ajax.reload();-->
-							$('#app-dropdown').trigger('change');
-							console.log(response);
-							showErrorModal('success', JSON.stringify(response));
-						}
-					});
+                var sampleRequestText = $('#editSampleRequestText').val().trim();
+                var sampleRequestLocation = $('#editSampleRequestLocation').val().trim();
+
+                var httpMethod = $('#editHttpMethod').val();
+
+                // Check if httpMethod is selected
+                if (!httpMethod || httpMethod.trim() === '') {
+                    // Display error message
+                    showErrorModal('error', 'HTTP Method is required.');
+                    return;
+                }
+
+                // Check if httpMethod is PUT or POST and sampleRequestLocation or sampleRequestText is blank
+                if (($('#editHttpMethod').val() === 'PUT' || $('#editHttpMethod').val() === 'POST') && (sampleRequestLocation === '' && sampleRequestText === '')) {
+                    // Display error message
+                    showErrorModal('error', 'Sample Request Location or Sample Request Text is required for PUT and POST methods.');
+                    return;
+                }
+                showConfirmationModal('Are you sure you want to edit this record?', 'Edit', function() {
+                    var editedData = {
+                        "serviceName": $('#editServiceName').val(),
+                        "operationName": $('#editOperationName').val(),
+                        "useCase": $('#editUseCase').val(),
+                        "successCriteria": $('#editSuccessCriteria').val(),
+                        "endpoint": $('#editEndpoint').val(),
+                        "sampleRequestLocation": $('#editSampleRequestLocation').val(),
+                        "httpMethod": $('#editHttpMethod').val(),
+                        "headers": JSON.parse($('#editHeaders').val()),
+                        "appConfig": targetJson
+                    };
+
+                    // Update sampleRequestText and save to file
+                    var sampleRequestText = $('#editSampleRequestText').val();
+                    var fileName = $('#editServiceName').val() + '_' + $('#editOperationName').val() + '_Request.txt';
+
+
+                    if (sampleRequestText !== '') {
+                        // Update sampleRequestText and save to file
+                        var fileName = $('#editServiceName').val() + '_' + $('#editOperationName').val() + '_Request.txt';
+                        $.ajax({
+                            type: 'POST',
+                            contentType: 'application/json',
+                            url: '/save_request_text',
+                            data: JSON.stringify({ fileName: fileName, sampleRequestText: sampleRequestText }),
+                            success: function(response) {
+                                // Update sampleRequestLocation and save edited data
+                                editedData.sampleRequestLocation = "static/requests/" + fileName;
+                                saveEditedData(editedData,rowId);
+                            }
+                        });
+                    } else {
+                        // No need to update sampleRequestText, directly save edited data
+                        saveEditedData(editedData,rowId);
+                    }
 				});
 			});
 		});
 
-
+        // Function to save edited data
+        function saveEditedData(editedData, rowId) {
+//            console.log(rowId);
+            $.ajax({
+                type: 'PUT',
+                contentType: 'application/json',
+                url: '/edit/' + rowId,
+                data: JSON.stringify(editedData),
+                success: function(response) {
+                    $('#app-dropdown').trigger('change');
+                    console.log(response);
+                    showErrorModal('success', JSON.stringify(response));
+                }
+            });
+        }
 
 		// Delete Button Click Handler
 		$('#dataTable tbody').on('click', 'button.deleteBtn', function() {

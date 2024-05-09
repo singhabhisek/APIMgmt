@@ -171,6 +171,11 @@
 									<label for="editSampleRequestLocation">Request Location<span class="text-danger">*</span></label>
 									<input type="text" class="form-control" id="editSampleRequestLocation" required tabindex="4">
 								</div>
+								<!-- Add a new textarea for sample request text -->
+								<div class="form-group">
+									<label for="editSampleRequestText">Sample Request Text</label>
+									<textarea class="form-control" id="editSampleRequestText" rows="4"></textarea>
+								</div>
 								<div class="form-group">
 									<label for="editHttpMethod">Http Method<span class="text-danger">*</span></label>
 									<select class="form-control" id="editHttpMethod" required tabindex="6">
@@ -184,7 +189,7 @@
 								<div class="form-group">
 									<label for="editHeaders">Headers</label>
 									<textarea class="form-control" id="editHeaders" rows="4" placeholder='{ "sampleKey": "sampleValue" }' tabindex="8"></textarea>
-									<span class="text-danger">Put values in double quotes separated by comma inside curly braces. If no headers, just use empty braces { }</span>
+									<span class="text-secondary">Put values in double quotes separated by comma inside curly braces. If no headers, just use empty braces { }</span>
 								</div>
 							</form>
 						</div>
